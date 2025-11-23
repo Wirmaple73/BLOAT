@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -100,11 +100,13 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS
+;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
       <EnableModules>true</EnableModules>
+      <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -137,14 +139,16 @@
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CmdArgsParser.h" />
     <ClInclude Include="Exceptions.h" />
     <ClInclude Include="BloatArchive.h" />
     <ClInclude Include="ArchiveFile.h" />
     <ClInclude Include="Bloater.h" />
-    <ClInclude Include="Checksum.h" />
     <ClInclude Include="Obfuscator.h" />
+    <ClInclude Include="OperationExecutor.h" />
     <ClInclude Include="Scrambler.h" />
-    <ClInclude Include="XorshiftRandom.h" />
+    <ClInclude Include="SplitMix64.h" />
+    <ClInclude Include="Xorshift64Star.h" />
     <ClInclude Include="Stream.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
