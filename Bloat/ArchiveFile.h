@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <fstream>
 #include <vector>
+#include <ranges>
 #include "Stream.h"
 #include "Bloater.h"
 #include "Scrambler.h"
@@ -18,41 +19,59 @@ class ArchiveFile
 private:
 	const ArchiveFileType fileType;
 
-	const fs::path path;
-	const std::shared_ptr<FileStream> fs;
+	const fs::path actualPath;  // For external files only
+	const fs::path relativePath;
 
 	const std::shared_ptr<Scrambler> scrambler;
 
 	// For internal files only
+	const fs::path archivePath;
+
 	const uint64_t dataStartOffset{};
 	const uint64_t dataLength{};
 
 public:
-	//inline ArchiveFileType GetArchiveFileType() const noexcept { return fileType; }
+	// For external files
+	inline ArchiveFile(const fs::path& actualPath, const fs::path& relativePath, const std::shared_ptr<Scrambler>& scrambler)
+		: fileType(ArchiveFileType::ExternalFile), actualPath(actualPath), relativePath(relativePath), scrambler(scrambler) { }
 
-	inline ArchiveFile(const fs::path& path, const std::shared_ptr<FileStream>& stream, const std::shared_ptr<Scrambler>& scrambler)
-		: fileType(ArchiveFileType::ExternalFile), path(path), fs(stream), scrambler(scrambler) { }
-
+	// For internal files
 	inline ArchiveFile(
-		const fs::path& path, const std::shared_ptr<FileStream>& stream, const std::shared_ptr<Scrambler>& scrambler,
-		const uint64_t dataStartOffset, const uint64_t dataLength
+		const fs::path& relativePath, const std::shared_ptr<Scrambler>& scrambler,
+		const fs::path& archivePath, const uint64_t dataStartOffset, const uint64_t dataLength
 	)
-		: fileType(ArchiveFileType::InternalFile), path(path), fs(stream), scrambler(scrambler), dataStartOffset(dataStartOffset), dataLength(dataLength) { }
+		: fileType(ArchiveFileType::InternalFile), relativePath(relativePath), scrambler(scrambler),
+		archivePath(archivePath), dataStartOffset(dataStartOffset), dataLength(dataLength) { }
 
-	inline fs::path GetPath() const noexcept { return path; }
+	inline const fs::path& GetPath() const noexcept { return relativePath; }
 
-	inline std::vector<unsigned char> GetBytes()
+	// In bytes
+	inline uint64_t GetUnscrambledSize() const noexcept
+	{
+		return fileType == ArchiveFileType::InternalFile ?
+			dataLength / scrambler->GetBloatMultiplier() : fs::file_size(actualPath);
+	}
+
+	// In bytes
+	inline uint64_t GetScrambledSize() const noexcept
+	{
+		return fileType == ArchiveFileType::InternalFile ?
+			dataLength : fs::file_size(actualPath) * scrambler->GetBloatMultiplier();
+	}
+
+	inline std::vector<unsigned char> GetBytes() const
 	{
 		if (fileType == ArchiveFileType::InternalFile)
 		{
-			fs->SetReadPosition(dataStartOffset);
+			auto archiveStream = FileStream::OpenRead(archivePath);
+			archiveStream.SetReadPosition(dataStartOffset);
 
-			auto bytes = fs->ReadBytes(dataLength);
+			auto bytes = archiveStream.ReadBytes(dataLength);
 			scrambler->Unscramble(bytes);
 
 			return bytes;
 		}
 
-		return fs->ReadAllBytes();  // External file (not scrambled)
+		return FileStream::OpenRead(actualPath).ReadAllBytes();  // External file
 	}
 };
