@@ -23,6 +23,7 @@ private:
 	const fs::path relativePath;
 
 	const std::shared_ptr<Scrambler> scrambler;
+	bool isRemoved = false;
 
 	// For internal files only
 	const fs::path archivePath;
@@ -74,4 +75,7 @@ public:
 
 		return FileStream::OpenRead(actualPath).ReadAllBytes();  // External file
 	}
+
+	inline bool IsRemoved() const noexcept { return isRemoved; }
+	inline void MarkAsRemoved() noexcept { isRemoved = true; }
 };
