@@ -151,7 +151,7 @@ BloatArchive BloatArchive::Open(const fs::path& archivePath)
 	for (uint64_t i = 0; i < numFiles; i++)
 	{
 		const uint64_t pathLength = fs->Read<uint64_t>();
-		const fs::path path(fs->ReadString(pathLength));
+		const fs::path& path(fs->ReadString(pathLength));
 
 		const uint64_t byteLength = fs->Read<uint64_t>();
 

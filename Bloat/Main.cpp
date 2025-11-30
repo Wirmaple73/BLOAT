@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
 	catch (const std::invalid_argument& ex)
 	{
 		std::cerr << "An error occurred while parsing input arguments: " << ex.what()
-			      << " (One of the switches or its parameter (value) is invalid.)\n"
+			      << " One of the switches or its parameter (value) is invalid.\n"
 			      << "Please enter 'bloat help' to view usage help.\n";
 
 		return GetExitCode(ExitCode::MalformedArgument, pause);

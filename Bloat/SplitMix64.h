@@ -1,3 +1,5 @@
+#pragma once
+
 class SplitMix64
 {
 public:
