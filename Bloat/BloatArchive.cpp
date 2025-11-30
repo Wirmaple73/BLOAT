@@ -214,7 +214,7 @@ void BloatArchive::AddDirectory(const fs::path& dirPath, const bool recursive, c
 		for (const auto& file : fs::recursive_directory_iterator(dirPath, fs::directory_options::skip_permission_denied))
 			addFile(file);
 	}
-	catch (...)
+	else
 	{
 		for (const auto& file : fs::directory_iterator(dirPath, fs::directory_options::skip_permission_denied))
 			addFile(file);
