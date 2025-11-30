@@ -32,25 +32,31 @@
     <ClInclude Include="ArchiveFile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utils.h">
+    <ClInclude Include="StringUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Bloater.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Checksum.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FileStream.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="InvalidArchiveException.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="XorshiftRandom.h">
+    <ClInclude Include="Xorshift64Star.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Scrambler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Exceptions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Stream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SplitMix64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CmdArgsParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ArchiveManipulator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
