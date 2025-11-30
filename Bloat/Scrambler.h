@@ -3,7 +3,7 @@
 #include "Bloater.h"
 #include "Obfuscator.h"
 
-class Scrambler
+struct Scrambler
 {
 private:
 	uint64_t bloatMultiplier;
@@ -12,6 +12,16 @@ private:
 public:
 	inline uint64_t GetBloatMultiplier() const noexcept { return bloatMultiplier; }
 	inline const std::unique_ptr<Obfuscator>& GetObfuscator() const noexcept { return obfuscator; }
+
+	static inline std::shared_ptr<Scrambler> Create(uint64_t bloatMultiplier, const std::unique_ptr<Obfuscator>& obfuscator) noexcept
+	{
+		return std::make_shared<Scrambler>(bloatMultiplier, obfuscator);
+	}
+
+	static inline std::shared_ptr<Scrambler> CreateEmpty() noexcept
+	{
+		return std::make_shared<Scrambler>(1ui64, ObfuscatorFactory::Create(ObfuscatorId::EmptyObfuscator));
+	}
 
 	inline Scrambler(uint64_t bloatMultiplier, const std::unique_ptr<Obfuscator>& obfuscator) noexcept
 		: bloatMultiplier(bloatMultiplier), obfuscator(obfuscator->Clone()) { }
