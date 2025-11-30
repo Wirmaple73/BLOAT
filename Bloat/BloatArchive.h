@@ -3,6 +3,10 @@
 #include <unordered_map>
 #include "ArchiveFile.h"
 #include "Scrambler.h"
+#include "Exceptions.h"
+#include "Stream.h"
+#include "SplitMix64.h"
+#include "Xorshift64Star.h"
 
 namespace fs = std::filesystem;
 
