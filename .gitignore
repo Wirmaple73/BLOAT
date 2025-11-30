@@ -31,3 +31,4 @@
 *.out
 *.app
 /.vs
+/Bloat/x64
