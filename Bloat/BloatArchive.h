@@ -54,8 +54,6 @@ public:
 	void AddDirectory(const fs::path& dirPath, const bool recursive, const bool overwriteExisting);
 	void RemoveFile(const fs::path& filePath);
 
-#undef RemoveDirectory  // TODO
-
 	void RemoveDirectory(const fs::path& filePath);
 
 	const std::vector<ArchiveFile>& GetAllFiles() const noexcept;
