@@ -214,7 +214,7 @@ public:
 
     enum class ExitCode
     {
-        Success = 0, MalformedArgument = 1, InvalidArchive = 2, InvalidPassword = 3, UnexpectedError = 4
+        Success = 0, MalformedArgument = 1, ChecksumMismatch = 2, InvalidPassword = 3, UnexpectedError = 4
     };
 
     static inline const char* GetVersionInfo() noexcept { return VERSION_INFO; }
