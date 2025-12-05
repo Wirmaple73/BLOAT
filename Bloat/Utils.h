@@ -56,3 +56,22 @@ public:
         return s;
     }
 };
+
+class PathUtils
+{
+public:
+    static inline std::u8string NormalizeDirectory(const fs::path& dirPath) noexcept
+    {
+        std::u8string normalizedDir = StringUtils::ToLower(dirPath.generic_u8string());
+
+        if (!normalizedDir.ends_with(u8'/'))
+            normalizedDir += u8'/';
+
+        return normalizedDir;
+    }
+
+    static inline bool IsPathInsideDirectory(const fs::path& path, const std::u8string& normalizedDir) noexcept
+    {
+        return StringUtils::ToLower(path.generic_u8string()).starts_with(normalizedDir);
+    }
+};
