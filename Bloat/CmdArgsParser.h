@@ -220,7 +220,7 @@ public:
     static inline const char* GetVersionInfo() noexcept { return VERSION_INFO; }
     static inline const char* GetUsageHelp() noexcept { return USAGE_HELP; }
 
-    inline explicit CmdArgsParser(const int argc, char* argv[]) : args(argv, argc)
+    inline CmdArgsParser(const int argc, char* argv[]) : args(argv, argc)
     {
         if (argc < OPERATION_INDEX + 1)
             throw MalformedArgumentException("No operation has been specified.");
