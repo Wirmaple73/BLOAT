@@ -16,7 +16,9 @@ private:
 	uint8_t version = CURRENT_ARCHIVE_VERSION;
 
 	mutable bool isChecksumUpToDate = false;
-	mutable uint64_t checksum = 0ui64;
+	mutable uint64_t checksum{};
+
+	bool isChecksumVerified = true;
 
 	std::shared_ptr<Scrambler> scrambler;
 
@@ -34,6 +36,8 @@ private:
 	void ExtractFile(const ArchiveFile& file, const fs::path& destDir,
 		const bool overwriteExisting, const bool throwIfRemoved, const bool throwIfDuplicated) const;
 
+	uint64_t InternalCalculateChecksum(const bool forceRecalculate) const noexcept;
+
 public:
 	explicit BloatArchive() noexcept;
 	uint8_t GetVersion() const noexcept;
@@ -45,9 +49,9 @@ public:
 	void SetScrambler(const std::shared_ptr<Scrambler>& scrambler) noexcept;
 
 	// Some homebrewed hash accumulator function or something. We'll call it the glorious BLOATSUM (tm).
-	uint64_t GetChecksum() const;
+	uint64_t GetChecksum() const noexcept;
 
-	static BloatArchive Open(const fs::path& archivePath);
+	static BloatArchive Open(const fs::path& archivePath, const bool verifyChecksum = true);
 
 	// Adds a file to the archive.
 	void AddFile(const fs::path& filePath, const fs::path& relativePath, const bool overwriteExisting);
@@ -64,6 +68,7 @@ public:
 	const ArchiveFile& GetFile(const fs::path& filePath) const;
 
 	bool DoesFileExist(const fs::path& filePath) const noexcept;
+	bool DoesDirectoryExist(const fs::path& dirPath) const noexcept;
 
 	// Extracts all files to the destination directory.
 	void Extract(const fs::path& destDir, const bool overwriteExistingFiles) const;
