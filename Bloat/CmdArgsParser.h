@@ -228,20 +228,26 @@ public:
 
     inline Operation GetOperation() const
     {
-        const std::string& arg(args[OPERATION_INDEX]);
+        static const std::unordered_map<std::string, Operation>& operations
+        {
+            { "help",        Operation::Help       },
+            { "version",     Operation::Version    },
+            { "info",        Operation::Info       },
+            { "verify",      Operation::Verify     },
+            { "create",      Operation::Create     },
+            { "add",         Operation::Add        },
+            { "remove",      Operation::Remove     },
+            { "set",         Operation::Set        },
+            { "extract",     Operation::Extract    },
+            { "extract-all", Operation::ExtractAll }
+        };
 
-        // Quick 'n' dirty
-        if (StringUtils::AreEqualCaseInsensitive<char>(arg, "help"))        return Operation::Help;
-        if (StringUtils::AreEqualCaseInsensitive<char>(arg, "version"))     return Operation::Version;
-        if (StringUtils::AreEqualCaseInsensitive<char>(arg, "info"))        return Operation::Info;
-        if (StringUtils::AreEqualCaseInsensitive<char>(arg, "create"))      return Operation::Create;
-        if (StringUtils::AreEqualCaseInsensitive<char>(arg, "add"))         return Operation::Add;
-        if (StringUtils::AreEqualCaseInsensitive<char>(arg, "remove"))      return Operation::Remove;
-        if (StringUtils::AreEqualCaseInsensitive<char>(arg, "set"))         return Operation::Set;
-        if (StringUtils::AreEqualCaseInsensitive<char>(arg, "extract"))     return Operation::Extract;
-        if (StringUtils::AreEqualCaseInsensitive<char>(arg, "extract-all")) return Operation::ExtractAll;
+        const std::string& selectedOperation = StringUtils::ToLower<char>(args[OPERATION_INDEX]);
 
-        throw MalformedArgumentException(std::format("The specified operation ('{}') could not be resolved.", arg));
+        if (!operations.contains(selectedOperation))
+            throw MalformedArgumentException(std::format("The specified operation ('{}') could not be resolved.", selectedOperation));
+
+        return operations.at(selectedOperation);
     }
 
     inline fs::path GetArchivePath() const
