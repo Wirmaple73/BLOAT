@@ -41,12 +41,12 @@ public:
 
 	inline uint64_t GetKey() const override
 	{
-		throw std::logic_error("This obfuscator does not support random number generation.");
+		throw std::logic_error("This obfuscator does not support a custom key.");
 	}
 
 	inline void SetKey(const uint64_t key) override
 	{
-		throw std::logic_error("This obfuscator does not support random number generation.");
+		throw std::logic_error("This obfuscator does not support a custom key.");
 	}
 
 	inline void Obfuscate(std::vector<unsigned char>&) const override
@@ -78,7 +78,7 @@ public:
 	inline void SetKey(const uint64_t key) override
 	{
 		if (key == 0ui64)
-			throw InvalidObfuscatorKeyException("This obfuscator cannot use zero as its key.");
+			throw std::invalid_argument("This obfuscator cannot use zero as its key.");
 
 		this->key = key;
 	}
@@ -86,7 +86,7 @@ public:
 	void Obfuscate(std::vector<unsigned char>& bytes) const override
 	{
 		if (key == 0ui64)
-			throw InvalidObfuscatorKeyException("This obfuscator cannot use zero as its key.");
+			throw std::invalid_argument("This obfuscator cannot use zero as its key.");
 
 		// Xorshift is much faster than mt19937 and eliminates patterns as efficiently
 		Xorshift64Star random(key);
