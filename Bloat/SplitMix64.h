@@ -3,7 +3,7 @@
 class SplitMix64
 {
 public:
-    static inline uint64_t Mix(uint64_t x)
+    static inline uint64_t Mix(uint64_t x) noexcept
     {
         x ^= x >> 30;
         x *= 0xbf58476d1ce4e5b9ui64;
@@ -14,7 +14,7 @@ public:
         return x;
     }
 
-    static inline uint64_t ComputeHash(const std::vector<unsigned char>& bytes)
+    static inline uint64_t ComputeHash(const std::vector<unsigned char>& bytes) noexcept
     {
         // Sample:
         // 
