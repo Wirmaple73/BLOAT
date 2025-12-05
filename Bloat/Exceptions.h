@@ -36,14 +36,24 @@ public:
     inline explicit InvalidOperationException(const std::string& message) noexcept : std::runtime_error(message) {}
 };
 
-{
-public:
-};
-
 class InvalidArchiveException : public std::runtime_error
 {
 public:
     inline explicit InvalidArchiveException(const std::string& message) noexcept : std::runtime_error(message) {}
+};
+
+class ChecksumMismatchException : public std::runtime_error
+{
+private:
+    const uint64_t archiveChecksum, calculatedChecksum;
+
+public:
+    inline explicit ChecksumMismatchException(const std::string& message,
+        const uint64_t archiveChecksum, const uint64_t calculatedChecksum) noexcept
+        : std::runtime_error(message), archiveChecksum(archiveChecksum), calculatedChecksum(calculatedChecksum) {}
+
+    inline uint64_t GetArchiveChecksum() const noexcept { return archiveChecksum; }
+    inline uint64_t GetCalculatedChecksum() const noexcept { return calculatedChecksum; }
 };
 
 class DuplicateFileException : public std::runtime_error
