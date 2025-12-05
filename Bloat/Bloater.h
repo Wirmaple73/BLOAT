@@ -4,7 +4,7 @@
 class Bloater
 {
 public:
-	inline static void Bloat(std::vector<unsigned char>& bytes, uint64_t bloatMultiplier)
+	inline static void Bloat(std::vector<unsigned char>& bytes, const uint64_t bloatMultiplier)
 	{
 		/* Example:
 		* bytes = AB CD
@@ -13,7 +13,7 @@ public:
 		*/
 
 		if (bloatMultiplier < 1)
-			throw std::invalid_argument("The specified bloat multiplier is invalid, as it will result in data loss.");
+			throw std::invalid_argument("The specified bloat multiplier must be greater than or equal to 1.");
 
 		if (bloatMultiplier == 1)
 			return;
@@ -25,7 +25,7 @@ public:
 			std::memcpy(bytes.data() + run * originalByteSize, bytes.data(), originalByteSize);
 	}
 
-	inline static void Debloat(std::vector<unsigned char>& bytes, uint64_t bloatMultiplier)
+	inline static void Debloat(std::vector<unsigned char>& bytes, const uint64_t bloatMultiplier)
 	{
 		/* Example:
 		* bytes = AB CD   AB CD   AB CD
