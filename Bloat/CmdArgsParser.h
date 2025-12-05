@@ -259,11 +259,12 @@ public:
         return args[ARCHIVE_PATH_INDEX];
     }
 
-    inline bool IsPauseActivated() const noexcept { return !DoesSwitchExist("--no-pause"); }
+    inline bool IsPauseActivated() const noexcept { return DoesSwitchExist("--pause"); }
 
+    inline bool DoChecksumVerification() const noexcept { return !DoesSwitchExist("--no-verify"); }
     inline bool DoOverwriteArchive() const noexcept { return DoesSwitchExist("--overwrite-archive"); }
-    inline bool DoOverwriteFiles() const noexcept { return DoesSwitchExist("--overwrite-files"); }
 
+    inline bool DoOverwriteFiles() const noexcept { return DoesSwitchExist("--overwrite-files"); }
     inline bool DoRecursion() const noexcept { return !DoesSwitchExist("--no-subdirs"); }
 
     inline uint64_t GetBloatMultiplier() const { return std::stoull(GetSwitchParameter("-bm").value_or("1")); }
@@ -271,7 +272,7 @@ public:
     inline uint8_t GetObfuscatorId() const { return static_cast<uint8_t>(std::stoi(GetSwitchParameter("-obid").value_or("1"))); }
     inline uint64_t GetObfuscatorKey() const { return std::stoull(GetSwitchParameter("-obkey").value_or("0")); }
 
-    inline std::string GetPassword() const { return GetSwitchParameter("-password").value_or(""); }
+    inline std::string GetPassword() const noexcept { return GetSwitchParameter("-password").value_or(""); }
 
     inline fs::path GetOutputDirectory() const
     {
