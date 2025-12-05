@@ -1,7 +1,7 @@
 #pragma once
 #include <span>
 #include "Exceptions.h"
-#include "StringUtils.h"
+#include "Utils.h"
 
 class CmdArgsParser
 {
@@ -16,7 +16,8 @@ BLOAT is the first revolt against the heinous CIA (Compression Intelligence Agen
 USAGE:
   bloat help
   bloat version
-  bloat info        <archive_path>
+  bloat verify      <archive_path>
+  bloat info        <archive_path> [switches...]
   bloat create      <archive_path> [switches...] <file1> [file2...]
   bloat add         <archive_path> [switches...] <file1> [file2...]
   bloat remove      <archive_path> [switches...] <file1> [file2...]
@@ -28,7 +29,8 @@ USAGE:
 OPERATIONS:
   help                    Display this wall of text.
   version                 Display the current BLOAT version.
-  info                    Display the file list and other information about the specified archive.
+  info                    Display the file table and information about the specified archive.
+  verify                  Verify archive integrity by recalculating the checksum and ensuring it's valid.
   create                  Create a new archive and add the specified files/directories to it.
   add                     Add the specified files/directories to an existing archive.
   remove                  Remove the specified files/directories from an archive.
@@ -56,7 +58,7 @@ SWITCHES:
 
   -password               create: Encrypt the archive with the specified password. NOT MEANT FOR ACTUAL PROTECTION.
                           Other operations: Use the specified password to open the archive if it's encrypted.
-                          Applicable to: create, add, remove, set, extract, extract-all
+                          Applicable to: info, create, add, remove, set, extract, extract-all
                           Allowed values: Any (enclose the password in quotes if it contains space)
                           Default value: No password
 
@@ -73,7 +75,17 @@ SWITCHES:
                           Applicable to: add, extract, extract-all
                           Disabled by default.
 
-  --no-pause              Exit immediately when done instead of waiting for key press.
+  --no-verify             Skip integrity (checksum) verification to significantly speed up the archive opening phase,
+                          especially for larger archives.
+
+                          Note: If the operation is 'extract' or 'extract-all', extracted files may become corrupted
+                                if the archive itself is corrupted. Nonetheless, archive integrity is still verified
+                                when saving the archive.
+
+                          Applicable to: info, add, remove, set, extract, extract-all
+                          Disabled by default.
+
+  --pause                 Wait for key press instead of immediately exiting when done.
                           Disabled by default.
 
 
@@ -127,7 +139,7 @@ NOTES:
 EXIT CODES:
   0: The operation completed successfully.
   1: One or more arguments are malformed.
-  2: The archive is corrupted or is not a valid archive.
+  2: The archive is corrupted as there is a checksum mismatch.
   3: The specified password is incorrect or no password was specified.
   4: An unexpected error occurred. The error message was written to the standard error stream.)";
 
@@ -177,7 +189,7 @@ EXIT CODES:
             if (args[i][0] != '-')
                 continue;
 
-            // Switches starting with "--" don't take any parameter, while those starting with a single "-" do
+            // Switches starting with "--" don't take any parameter, while those starting with a single "-" do.
             if (args[i][1] == '-')
             {
                 lastArgIndex = i;
@@ -197,7 +209,7 @@ EXIT CODES:
 public:
     enum class Operation
     {
-        Help, Version, Info, Create, Add, Remove, Set, Extract, ExtractAll
+        Help, Version, Info, Verify, Create, Add, Remove, Set, Extract, ExtractAll
     };
 
     enum class ExitCode
