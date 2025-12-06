@@ -56,7 +56,8 @@ void BloatArchive::ExtractFile(const ArchiveFile& file, const fs::path& destDir,
 	FileStream::OpenWrite(outputFilePath, true).Write(file.GetBytes());
 }
 
-uint64_t BloatArchive::InternalCalculateChecksum(const bool forceRecalculate) const noexcept
+// Some homebrewed hash accumulator function or something. We'll call it the glorious BLOATSUM (tm).
+uint64_t BloatArchive::CalculateChecksum(const bool forceRecalculate) const noexcept
 {
 	if (!forceRecalculate && isChecksumUpToDate)
 		return checksum;
@@ -124,7 +125,7 @@ void BloatArchive::SetScrambler(const std::shared_ptr<Scrambler>& scrambler) noe
 
 uint64_t BloatArchive::GetChecksum() const noexcept
 {
-	return InternalCalculateChecksum(false);
+	return CalculateChecksum(false);
 }
 
 BloatArchive BloatArchive::Open(const fs::path& archivePath, const bool verifyChecksum)
@@ -185,6 +186,32 @@ BloatArchive BloatArchive::Open(const fs::path& archivePath, const bool verifyCh
 	archive.isChecksumVerified = archive.isChecksumUpToDate = true;
 
 	return archive;
+}
+
+const std::vector<ArchiveFile>& BloatArchive::GetAllFiles() const noexcept { return files; }
+
+const ArchiveFile& BloatArchive::GetFile(const fs::path& filePath) const
+{
+	ThrowIfFileDoesNotExist(filePath);
+	return files[fileIndices.at(filePath)];
+}
+
+bool BloatArchive::DoesFileExist(const fs::path& filePath) const noexcept
+{
+	return fileIndices.contains(filePath) && !files[fileIndices.at(filePath)].IsRemoved();
+}
+
+bool BloatArchive::DoesDirectoryExist(const fs::path& dirPath) const noexcept
+{
+	const std::u8string& normalizedDir = PathUtils::NormalizeDirectory(dirPath);
+
+	for (const ArchiveFile& file : files)
+	{
+		if (!file.IsRemoved() && PathUtils::IsPathInsideDirectory(file.GetPath(), normalizedDir))
+			return true;
+	}
+
+	return false;
 }
 
 void BloatArchive::AddFile(const fs::path& filePath, const fs::path& relativePath, const bool overwriteExisting)
@@ -262,30 +289,32 @@ void BloatArchive::RemoveDirectory(const fs::path& dirPath)
 	}
 }
 
-const std::vector<ArchiveFile>& BloatArchive::GetAllFiles() const noexcept { return files; }
-
-const ArchiveFile& BloatArchive::GetFile(const fs::path& filePath) const
+void BloatArchive::ExtractFile(const fs::path& filePath, const fs::path& destDir, const bool overwriteExisting, const bool throwIfDuplicated) const
 {
-	ThrowIfFileDoesNotExist(filePath);
-	return files[fileIndices.at(filePath)];
+	ExtractFile(GetFile(filePath), destDir, overwriteExisting, true, throwIfDuplicated);
 }
 
-bool BloatArchive::DoesFileExist(const fs::path& filePath) const noexcept
-{
-	return fileIndices.contains(filePath) && !files[fileIndices.at(filePath)].IsRemoved();
-}
-
-bool BloatArchive::DoesDirectoryExist(const fs::path& dirPath) const noexcept
+void BloatArchive::ExtractDirectory(const fs::path& dirPath, const fs::path& destDir, const bool overwriteExisting, const bool throwIfDuplicated) const
 {
 	const std::u8string& normalizedDir = PathUtils::NormalizeDirectory(dirPath);
+	AggregateException exceptions{};
 
 	for (const ArchiveFile& file : files)
 	{
-		if (!file.IsRemoved() && PathUtils::IsPathInsideDirectory(file.GetPath(), normalizedDir))
-			return true;
+		if (file.IsRemoved() || !PathUtils::IsPathInsideDirectory(file.GetPath(), normalizedDir))
+			continue;
+
+		try
+		{
+			ExtractFile(file, destDir, overwriteExisting, false, throwIfDuplicated);
+		}
+		catch (...)
+		{
+			exceptions.Add(std::current_exception());
+		}
 	}
 
-	return false;
+	exceptions.ThrowIfNonempty();
 }
 
 void BloatArchive::Extract(const fs::path& destDir, const bool overwriteExistingFiles) const
@@ -307,11 +336,6 @@ void BloatArchive::Extract(const fs::path& destDir, const bool overwriteExisting
 	exceptions.ThrowIfNonempty();
 }
 
-void BloatArchive::Extract(const fs::path& filePath, const fs::path& destDir, const bool overwriteExisting, const bool throwIfDuplicated) const
-{
-	ExtractFile(GetFile(filePath), destDir, overwriteExisting, true, throwIfDuplicated);
-}
-
 void BloatArchive::Save(const fs::path& destPath, const bool overwrite) const
 {
 	if (files.empty())
@@ -319,7 +343,7 @@ void BloatArchive::Save(const fs::path& destPath, const bool overwrite) const
 
 	const uint64_t oldChecksum = checksum;
 
-	if (!isChecksumVerified && checksum != InternalCalculateChecksum(true))
+	if (!isChecksumVerified && checksum != CalculateChecksum(true))
 		throw ChecksumMismatchException("The archive is corrupted as there is a checksum mismatch.", oldChecksum, GetChecksum());
 
 	fs::path tempPath = destPath;
@@ -362,7 +386,7 @@ void BloatArchive::Save(const fs::path& destPath, const bool overwrite) const
 			std::vector<unsigned char> bytes = file.GetBytes();
 			scrambler->Scramble(bytes);
 
-			const std::u8string path = file.GetPath().generic_u8string();
+			const std::u8string& path = file.GetPath().generic_u8string();
 
 			ts.Write(static_cast<uint64_t>(path.length()));
 			ts.Write(path);
