@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>info "B:\Games\Westward IV - All Aboard\game.blt" --overwrite-archive "B:\Games\Westward IV - All Aboard"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>add C:\Users\Wirmaple73\source\repos\Bloat\x64\Debug\Downloads.blt --pause C:\Users\Wirmaple73\source\repos\Bloat\x64\Debug\Downloads\تست</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>
