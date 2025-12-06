@@ -33,28 +33,28 @@ private:
 
 public:
 	// For external files
-	inline ArchiveFile(const fs::path& actualPath, const fs::path& relativePath, const std::shared_ptr<Scrambler>& scrambler)
+	inline ArchiveFile(const fs::path& actualPath, const fs::path& relativePath, const std::shared_ptr<Scrambler>& scrambler) noexcept
 		: fileType(ArchiveFileType::ExternalFile), actualPath(actualPath), relativePath(relativePath), scrambler(scrambler) { }
 
 	// For internal files
 	inline ArchiveFile(
 		const fs::path& relativePath, const std::shared_ptr<Scrambler>& scrambler,
 		const fs::path& archivePath, const uint64_t dataStartOffset, const uint64_t dataLength
-	)
+	) noexcept
 		: fileType(ArchiveFileType::InternalFile), relativePath(relativePath), scrambler(scrambler),
 		archivePath(archivePath), dataStartOffset(dataStartOffset), dataLength(dataLength) { }
 
 	inline const fs::path& GetPath() const noexcept { return relativePath; }
 
 	// In bytes
-	inline uint64_t GetUnscrambledSize() const noexcept
+	inline uint64_t GetUnscrambledSize() const
 	{
 		return fileType == ArchiveFileType::InternalFile ?
 			dataLength / scrambler->GetBloatMultiplier() : fs::file_size(actualPath);
 	}
 
 	// In bytes
-	inline uint64_t GetScrambledSize() const noexcept
+	inline uint64_t GetScrambledSize() const
 	{
 		return fileType == ArchiveFileType::InternalFile ?
 			dataLength : fs::file_size(actualPath) * scrambler->GetBloatMultiplier();
