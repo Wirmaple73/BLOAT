@@ -30,7 +30,7 @@ private:
 			}
 			catch (const AggregateException& ex)
 			{
-				HandleAggregatePathException(ex, path);
+				HandleAggregatePathException(ex);
 			}
 			catch (...)
 			{
@@ -57,7 +57,7 @@ private:
 		// Probably something fatal. Abort and let main() handle it.
 	}
 
-	static inline void HandleAggregatePathException(const AggregateException& ex, const fs::path& originalPath)
+	static inline void HandleAggregatePathException(const AggregateException& ex)
 	{
 		for (const std::exception_ptr& inner : ex.GetInnerExceptions())
 			HandlePathException(inner);
@@ -181,7 +181,7 @@ public:
 			}
 			catch (const AggregateException& ex)
 			{
-				HandleAggregatePathException(ex, path);
+				HandleAggregatePathException(ex);
 			}
 			catch (...)
 			{
@@ -227,7 +227,7 @@ public:
 		}
 		catch (const AggregateException& ex)
 		{
-			HandleAggregatePathException(ex, outputDir);
+			HandleAggregatePathException(ex);
 		}
 	}
 };
