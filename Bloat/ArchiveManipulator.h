@@ -2,15 +2,17 @@
 #include <filesystem>
 #include "BloatArchive.h"
 #include "CmdArgsParser.h"
-#include "StringUtils.h"
+#include "Utils.h"
 
 namespace fs = std::filesystem;
 
 class ArchiveManipulator
 {
 private:
-	const fs::path archivePath;
-	const std::string password;
+	fs::path archivePath;
+	std::string password;
+
+	bool verifyChecksum = true;
 
 	static inline void InternalAddEntriesToArchive(BloatArchive& archive, const std::span<char*>& paths, const bool recursive,
 		const bool overwrite)
@@ -45,16 +47,14 @@ private:
 		}
 		catch (const DuplicateFileException& ex)
 		{
-			DisplayPathError(ex.GetFilePath(), std::string(ex.what()) + " (Specify \"--overwrite-files\" to force overwrite.)");
+			DisplayPathError(ex.GetFilePath(), std::string(ex.what()) + " Specify \"--overwrite-files\" to force overwrite.");
 		}
 		catch (const FileNotFoundException& ex)
 		{
 			DisplayPathError(ex.GetFilePath(), ex.what());
 		}
-		catch (...)  // Probably something fatal. Abort and let main() handle it.
-		{
-			throw;
-		}
+
+		// Probably something fatal. Abort and let main() handle it.
 	}
 
 	static inline void HandleAggregatePathException(const AggregateException& ex, const fs::path& originalPath)
@@ -69,12 +69,14 @@ private:
 	}
 
 public:
-	inline explicit ArchiveManipulator(const fs::path& archivePath, const std::string& password) noexcept
-		: archivePath(archivePath), password(password) { }
+	inline explicit ArchiveManipulator() noexcept { }
+
+	inline explicit ArchiveManipulator(const fs::path& archivePath, const std::string& password, const bool verifyChecksum) noexcept
+		: archivePath(archivePath), password(password), verifyChecksum(verifyChecksum) {}
 
 	void DisplayInfo() const
 	{
-		const BloatArchive& archive = BloatArchive::Open(archivePath);
+		const BloatArchive& archive = BloatArchive::Open(archivePath, verifyChecksum);
 		const auto& obfuscator = archive.GetScrambler()->GetObfuscator();
 
 		const uint64_t bloatMultiplier = archive.GetScrambler()->GetBloatMultiplier();
@@ -90,20 +92,24 @@ public:
 
 		MemoryStream stream{};
 
-		stream << "Archive name: " << archivePath.filename().string() << "\n\n"
+		stream << "Archive info for " << archivePath.filename().string() << ":\n\n"
 
 			<< "--- General Information ---\n"
-			<< "* Archive version: "  << static_cast<int>(archive.GetVersion()) << "\n"
-			<< "* Archive size: "     << archiveSize / 1024.0 << " KB\n"
-			<< "* Unscrambled size: " << archiveSize / static_cast<double>(bloatMultiplier) / 1024 << " KB\n"
-			<< "* Checksum: "         << archive.GetChecksum() << "\n\n"
+			<< "* Archive version:  " << static_cast<int>(archive.GetVersion()) << "\n"
+			<< "* Archive size:     " << StringUtils::AddThousandsSeparators(archiveSize / 1024) << " KiB\n"
+			<< "* Unscrambled size: " << StringUtils::AddThousandsSeparators(archiveSize / bloatMultiplier / 1024) << " KiB\n"
+			<< "* Checksum:         " << archive.GetChecksum() << (!verifyChecksum ? " (unverified)" : "") << "\n\n"
 
 			<< "--- Scrambler Information ---\n"
 			<< "* Bloat multiplier: " << bloatMultiplier << "\n"
-			<< "* Obfuscator ID: "    << static_cast<int>(obfuscator->GetId()) << " (" << obfuscator->GetName() << ")\n"
-			<< "* Obfuscator key: "   << obfuscator->GetKey() << "\n\n"
+			<< "* Obfuscator ID:    " << static_cast<int>(obfuscator->GetId()) << " (" << obfuscator->GetName() << ")\n";
 
-			<< "--- File List ---\n"
+		if (obfuscator->SupportsKey())
+			stream << "* Obfuscator key:   " << obfuscator->GetKey() << "\n\n";
+		else
+			stream << "* Obfuscator key:   " << "Not supported" << "\n\n";
+
+		stream << "--- File List ---\n"
 			<< "* File count: " << fileCount << "\n\n";
 
 		stream.Write(std::format("{:>4} | {:<50} | {:>20} | {:>22}\n", "#", "Path", "Scrambled size (KiB)", "Unscrambled size (KiB)"));
@@ -111,12 +117,15 @@ public:
 
 		for (size_t i = 0; i < fileCount; i++)
 		{
+			const uint64_t scrambledSize   = files[i].GetScrambledSize() / 1024;  // Convert bytes to KiB
+			const uint64_t unscrambledSize = files[i].GetUnscrambledSize() / 1024;
+
 			stream.Write(
 				std::format("{:>4} | {:<50} | {:>20} | {:>22}\n",
 					i + 1,
 					StringUtils::Truncate(files[i].GetPath().generic_string(), 50),
-					StringUtils::AddThousandsSeparators(files[i].GetScrambledSize()),
-					StringUtils::AddThousandsSeparators(files[i].GetUnscrambledSize())
+					StringUtils::AddThousandsSeparators(scrambledSize != 0ui64 ? scrambledSize : 1ui64),
+					StringUtils::AddThousandsSeparators(unscrambledSize != 0ui64 ? unscrambledSize : 1ui64)
 				)
 			);
 		}
@@ -124,9 +133,15 @@ public:
 		std::cout << stream.GetData() << "\n";
 	}
 
+	inline void VerifyIntegrity() const
+	{
+		BloatArchive::Open(archivePath, true);
+		std::cout << "No errors have been found.\n";
+	}
+
 	//template<std::convertible_to<fs::path>... Paths>
 	void Create(const std::span<char*>& paths, const std::shared_ptr<Scrambler>& scrambler, const bool overwriteArchive,
-		const bool recursive)
+		const bool recursive) const
 	{
 		if (fs::is_regular_file(archivePath))
 		{
@@ -141,25 +156,25 @@ public:
 		archive.Save(archivePath, true);
 	}
 
-	inline void Append(const std::span<char*>& paths, const bool recursive, const bool overwriteExisting)
+	inline void Append(const std::span<char*>& paths, const bool recursive, const bool overwriteExisting) const
 	{
-		BloatArchive archive = BloatArchive::Open(archivePath);
+		BloatArchive archive = BloatArchive::Open(archivePath, verifyChecksum);
 		InternalAddEntriesToArchive(archive, paths, recursive, overwriteExisting);
 
 		archive.Save(archivePath, true);
 	}
 
-	inline void Remove(const std::span<char*>& paths)
+	inline void Remove(const std::span<char*>& paths) const
 	{
-		BloatArchive archive = BloatArchive::Open(archivePath);
+		BloatArchive archive = BloatArchive::Open(archivePath, verifyChecksum);
 
 		for (const fs::path& path : paths)
 		{
 			try
 			{
-				if (fs::is_regular_file(path))
+				if (archive.DoesFileExist(path))
 					archive.RemoveFile(path);
-				else if (fs::is_directory(path))
+				else if (archive.DoesDirectoryExist(path))
 					archive.RemoveDirectory(path);
 				else
 					DisplayPathError(path, "The specified path does not represent a valid file or directory.");
@@ -177,17 +192,17 @@ public:
 		archive.Save(archivePath, true);
 	}
 
-	inline void SetScrambler(const std::shared_ptr<Scrambler>& scrambler)
+	inline void SetScrambler(const std::shared_ptr<Scrambler>& scrambler) const
 	{
-		BloatArchive archive = BloatArchive::Open(archivePath);
+		BloatArchive archive = BloatArchive::Open(archivePath, verifyChecksum);
 
 		archive.SetScrambler(scrambler);
 		archive.Save(archivePath, true);
 	}
 
-	inline void Extract(const std::span<char*>& paths, const fs::path& outputDir, const bool overwriteExisting)
+	inline void Extract(const std::span<char*>& paths, const fs::path& outputDir, const bool overwriteExisting) const
 	{
-		const BloatArchive& archive = BloatArchive::Open(archivePath);
+		const BloatArchive& archive = BloatArchive::Open(archivePath, verifyChecksum);
 
 		for (const fs::path& path : paths)
 		{
@@ -202,9 +217,9 @@ public:
 		}
 	}
 
-	inline void Extract(const fs::path& outputDir, const bool overwriteExisting)
+	inline void Extract(const fs::path& outputDir, const bool overwriteExisting) const
 	{
-		const BloatArchive& archive = BloatArchive::Open(archivePath);
+		const BloatArchive& archive = BloatArchive::Open(archivePath, verifyChecksum);
 
 		try
 		{
