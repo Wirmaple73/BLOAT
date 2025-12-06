@@ -66,9 +66,13 @@ public:
 
 	const std::vector<ArchiveFile>& GetAllFiles() const noexcept;
 	const ArchiveFile& GetFile(const fs::path& filePath) const;
+	// Extracts the specified file to the destination directory.
+	void ExtractFile(const fs::path& filePath, const fs::path& destDir, const bool overwriteExisting, const bool throwIfDuplicated) const;
 
 	bool DoesFileExist(const fs::path& filePath) const noexcept;
 	bool DoesDirectoryExist(const fs::path& dirPath) const noexcept;
+	// Extracts the specified directory to the destination directory.
+	void ExtractDirectory(const fs::path& dirPath, const fs::path& destDir, const bool overwriteExisting, const bool throwIfDuplicated) const;
 
 	// Extracts all files to the destination directory.
 	void Extract(const fs::path& destDir, const bool overwriteExistingFiles) const;
