@@ -208,7 +208,16 @@ public:
 		{
 			try
 			{
-				archive.Extract(path, outputDir, overwriteExisting, true);
+				if (archive.DoesFileExist(path))
+					archive.ExtractFile(path, outputDir, overwriteExisting, true);
+				else if (archive.DoesDirectoryExist(path))
+					archive.ExtractDirectory(path, outputDir, overwriteExisting, true);
+				else
+					DisplayPathError(path, "The specified path does not represent a valid file or directory.");
+			}
+			catch (const AggregateException& ex)
+			{
+				HandleAggregatePathException(ex);
 			}
 			catch (...)
 			{
